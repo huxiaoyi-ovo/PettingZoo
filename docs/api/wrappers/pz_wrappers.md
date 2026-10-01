@@ -134,6 +134,8 @@ while parallel_env.agents:
 .. autoclass:: ClipRewardV1
 .. autoclass:: ClipRewardParallelV1
 .. autoclass:: OrderEnforcingWrapper
+.. autoclass:: NanNoopV1
+.. autoclass:: NanNoopParallelV1
 .. autoclass:: NanZerosV1
 .. autoclass:: NanZerosParallelV1
 .. autoclass:: AgentIndicatorV1
