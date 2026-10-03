@@ -1,0 +1,60 @@
+name: Validate PR 1495 locally
+
+on:
+  push:
+    branches: [validate-pr1495-ci]
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install pre-commit
+        run: |
+          pip install numpy==1.26
+          pipx install pre-commit
+
+      - name: Apply automatic pre-commit fixes
+        run: |
+          pre-commit run --all-files || true
+
+      - name: Commit automatic fixes
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Apply pre-commit fixes"
+            git push
+          fi
+
+      - name: Verify pre-commit is clean
+        run: pre-commit run --all-files
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-opengl xvfb
+          pip install -e .[all]
+          pip install -e .[testing]
+          pip install supersuit shimmy pytest-split
+          AutoROM -v
+
+      - name: Focused structured-state test
+        run: xvfb-run -s "-screen 0 1024x768x24" pytest -v pettingzoo/test/state_test.py
+
+      - name: Full Python test suite
+        run: xvfb-run -s "-screen 0 1024x768x24" pytest -v --cov=pettingzoo --cov-report term
+
+      - name: Documentation tests
+        run: |
+          pip install -r docs/requirements.txt
+          python docs/_scripts/gen_envs_mds.py
+          xvfb-run -s "-screen 0 1024x768x24" pytest docs --markdown-docs -m markdown-docs --ignore=tutorials --ignore=docs/tutorials
